@@ -1,0 +1,29 @@
+{
+  "name": "my-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build && node ./scripts/build.mjs",
+    "start": "npx serve --config ../serve.json ./out",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@hazae41/immutable": "^1.0.13",
+    "next": "15.4.1",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "@hazae41/next-sidebuild": "^1.0.2",
+    "@tailwindcss/postcss": "^4.1.11",
+    "@types/node": "^24.0.14",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "eslint": "^9.31.0",
+    "eslint-config-next": "15.4.1",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11",
+    "typescript": "^5.8.3"
+  }
+}
