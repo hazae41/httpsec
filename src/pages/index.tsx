@@ -15,7 +15,8 @@ export default function Home() {
 
   const [_0, hash, _1, ...href] = location.hash.split("/")
 
-  const policy = useRef(`script-src 'sha256-${Base64.fromBase64Url(hash)}';`)
+  // const policy = useRef(`script-src 'sha256-${Base64.fromBase64Url(hash)}';`)
+  const policy = useRef(`script-src 'sha256-+REarvlix0czEKAgG5/QYe/ekfCYpPjGiiIRjiEMcn4=';`)
 
   const [key, setKey] = useState(crypto.randomUUID())
 
