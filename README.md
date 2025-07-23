@@ -48,7 +48,7 @@ And recursively allow more scripts to load using preembedded hashes
   if (sha256(document) !== "xyz")
     throw new Error()
 
-  parent.postMessage("please allow def456 and ghi789 to load")
+  parent.postMessage("please allow scripts def456 and ghi789 to load")
 
   ...
 </script>
