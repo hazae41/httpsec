@@ -2,6 +2,10 @@
 
 Load websites with integrity checks
 
+### Work in prograss 
+
+Do not use
+
 ## How it works
 
 You pass an URL and a hash to the HTTPSec webapp
