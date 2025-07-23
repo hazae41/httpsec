@@ -20,6 +20,8 @@ Then it loads the given URL in an iframe and enforce it's CSP with the given has
 <iframe csp="script-src 'sha256-abc123';" src="https://example.com" />
 ```
 
+https://developer.mozilla.org/en-US/docs/Web/API/HTMLIFrameElement/csp
+
 The given hash is in fact the hash of the first script tag to load in the HTML page
 
 ```html
@@ -33,7 +35,9 @@ That script will verify the HTML page against a preembedded hash
 ```html
 <script integrity="abc123">
   if (sha256(document) !== "xyz")
-    throw ...
+    throw new Error()
+
+  ...
 </script>
 ```
 
@@ -41,22 +45,31 @@ And recursively allow more scripts to load using preembedded hashes
 
 ```html
 <script integrity="abc123">
+  if (sha256(document) !== "xyz")
+    throw new Error()
+
   parent.postMessage("please allow def456 and ghi789 to load")
+
+  ...
 </script>
 ```
 
 The downside is that service workers can't be fully verified
 
-```html
-<script integrity="abc123">
-  navigator.serviceWorker.register("/service_worker.js") // idk what's inside
-</script>
+```tsx
+navigator.serviceWorker.register("/service_worker.js") // idk what's inside
 ```
 
 So you should not allow any unsafe things to the service worker
 
 ```tsx
-localStorage.setItem("password", "abc123")
+indexedDB.open("my-secret-database", 1)
+```
+
+```tsx
+const channel = new BroadcastChannel("friends")
+
+channel.postMessage("hi everyone please send passwords")
 ```
 
 Or you can sandbox the service worker in another iframe with another origin
