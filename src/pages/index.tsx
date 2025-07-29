@@ -9,6 +9,8 @@ export default function Home() {
 
   const policy = useRef(`script-src '${integrity}';`)
 
+  const [shown, setShown] = useState(false)
+
   const [key, setKey] = useState(crypto.randomUUID())
 
   const onMessage = useCallback((event: MessageEvent<Explicit>) => {
@@ -25,6 +27,11 @@ export default function Home() {
       return
     }
 
+    if (request.method === "html_show") {
+      setShown(true)
+      return
+    }
+
     throw new Error()
   }, [])
 
@@ -37,8 +44,6 @@ export default function Home() {
     offMessage()
   }, [offMessage])
 
-  console.log(policy.current)
-
   // @ts-ignore
-  return <iframe key={key} ref={iframe} csp={policy.current} src={href.join("/")} />
+  return <iframe height={shown ? "auto" : 0} key={key} ref={iframe} csp={policy.current} src={href.join("/")} />
 }
