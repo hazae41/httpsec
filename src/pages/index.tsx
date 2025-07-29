@@ -23,12 +23,12 @@ export default function Home() {
   const onMessage = useCallback((event: MessageEvent<Explicit>) => {
     const [request] = event.data
 
-    if (request.method === "httpsec_get") {
+    if (request.method === "csp_get") {
       iframe.current?.contentWindow?.postMessage([{ result: policy.current }], "*")
       return
     }
 
-    if (request.method === "httpsec_set") {
+    if (request.method === "csp_set") {
       policy.current = request.params[0]
       setKey(crypto.randomUUID())
       return
