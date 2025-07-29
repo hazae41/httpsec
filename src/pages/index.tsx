@@ -2,21 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export type Explicit = [{ method: string, params: any[] }, Transferable[]]
 
-export namespace Base64 {
-
-  export function fromBase64Url(text: string): string {
-    return text.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - text.length % 4) % 4);
-  }
-
-}
-
 export default function Home() {
   const iframe = useRef<HTMLIFrameElement>(null)
 
-  const [_0, hash, _1, ...href] = location.hash.split("/")
+  const [integrity, ...href] = location.hash.slice(1).split("@")
 
-  // const policy = useRef(`script-src 'sha256-${Base64.fromBase64Url(hash)}';`)
-  const policy = useRef(`script-src 'sha256-+REarvlix0czEKAgG5/QYe/ekfCYpPjGiiIRjiEMcn4=';`)
+  const policy = useRef(`script-src '${integrity}';`)
 
   const [key, setKey] = useState(crypto.randomUUID())
 
