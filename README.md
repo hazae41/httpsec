@@ -11,7 +11,7 @@ Do not use
 You pass an URL and a hash to the HTTPSec webapp
 
 ```
-https://httpsec.app/#/some-base64url-sha256-hash/#/https://example.com
+https://httpsec.app/#sha256-abc123@https://example.com
 ```
 
 Then it loads the given URL in an iframe and enforce it's CSP with the given hash
@@ -54,6 +54,8 @@ And recursively allow more scripts to load using preembedded hashes
 </script>
 ```
 
+### Service workers
+
 The downside is that service workers can't be fully verified
 
 ```tsx
@@ -92,3 +94,17 @@ addEventListener("fetch", () => {
   </html>
 })
 ```
+
+### What happens if HTTPSec gets hacked?
+
+First, the HTTPSec app is immutably cached (~1 year on most browsers) so it can only be compromised on first download or during an user-approved update
+
+Then, the HTTPSec app cannot do much harm by itself, it can only restricts the subpage, so in the worst case scenario, it just does nothing instead of verifying
+
+The worst thing the HTTPSec app can do is redirect you into a phishing page, but this can be noticed in most cases, and does not actually compromise your real page
+
+To do real harm, a hacker needs to compromise the HTTPSec app on first download, and then compromise the subpage (which can be immutably cached too), which is very hard
+
+Your only concern is phishing, which is an easier problem than your website getting compromised, and would need to be solved anyways even without using HTTPSec
+
+So you take almost zero extra risk when using it, it's like adding a condom to your website, you get 99% protection instead of 0%
