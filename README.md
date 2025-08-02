@@ -107,4 +107,4 @@ To do real harm, a hacker needs to compromise the HTTPSec app on first download,
 
 Your only concern is phishing, which is an easier problem than your website getting compromised, and would need to be solved anyways even without using HTTPSec
 
-So you take almost zero extra risk when using it, it's like adding a condom to your website, you get 99% protection instead of 0%
+So you take almost zero extra risk when using it, it's like adding a condom to your website, you get 99% protection instead of 0%, which is a good deal
