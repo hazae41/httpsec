@@ -1,34 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { FrameWithCsp } from "@/libs/frame";
+import { useHash } from "@/libs/hash";
+import { splitAndJoin } from "@/libs/split";
+import { RpcErr, RpcError, RpcOk, RpcRequestInit } from "@hazae41/jsonrpc";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-export type Explicit = [{ method: string, params: any[] }, Transferable[]]
-
-export function splitAndJoin(text: string, separator: string): [string, string] {
-  const [first, ...rest] = text.split(separator)
-
-  const join = rest.join(separator)
-
-  return [first, join]
-}
-
-export function useHash() {
-  const [hash, setHash] = useState(location.hash)
-
-  const onHashChange = useCallback(() => {
-    setHash(location.hash)
-  }, [])
-
-  useEffect(() => {
-    addEventListener("hashchange", onHashChange)
-    return () => removeEventListener("hashchange", onHashChange)
-  }, [onHashChange])
-
-  return hash
-}
+export type ExplicitRpcRequest = [RpcRequestInit, Transferable[]]
 
 export default function Home() {
   const hash = useHash()
 
   const [integrity, href] = splitAndJoin(hash.slice(1), "@")
+
+  const url = useMemo(() => new URL(href), [href])
 
   const [hidden, setHidden] = useState(true)
 
@@ -40,16 +23,16 @@ export default function Home() {
 
   const iframe = useRef<HTMLIFrameElement>(null)
 
-  const routeOrThrow = useCallback((event: MessageEvent<Explicit>) => {
+  const routeOrThrow = useCallback(async (event: MessageEvent<ExplicitRpcRequest>) => {
     const [request] = event.data
 
     if (request.method === "csp_get") {
-      iframe.current?.contentWindow?.postMessage([{ result: policy }], "*")
-      return
+      return policy
     }
 
     if (request.method === "csp_set") {
-      setPolicy(request.params[0])
+      const [policy] = request.params as [string]
+      setPolicy(policy)
       return
     }
 
@@ -61,29 +44,27 @@ export default function Home() {
     throw new Error()
   }, [policy])
 
-  const routeOrThrowAsRef = useRef(routeOrThrow)
-  routeOrThrowAsRef.current = routeOrThrow
-
-  const onMessage = useCallback((event: MessageEvent<Explicit>) => {
-    if (event.origin !== location.origin)
+  const onMessage = useCallback(async (event: MessageEvent<ExplicitRpcRequest>) => {
+    if (event.origin !== url.origin)
       return
-    routeOrThrowAsRef.current(event)
-  }, [])
+    const [request] = event.data
+
+    try {
+      const response = new RpcOk(request.id, await routeOrThrow(event))
+      event.source?.postMessage([response], { targetOrigin: event.origin })
+    } catch (e: unknown) {
+      const response = new RpcErr(request.id, RpcError.rewrap(e))
+      event.source?.postMessage([response], { targetOrigin: event.origin })
+    }
+  }, [url, routeOrThrow])
 
   useEffect(() => {
     addEventListener("message", onMessage)
     return () => removeEventListener("message", onMessage)
   }, [onMessage])
 
-  const [ready, setReady] = useState(false)
-
-  useEffect(() => {
-    setReady(true)
-  }, [])
-
-  if (!ready)
-    return null
-
-  // @ts-ignore
-  return <iframe height={hidden ? "auto" : 0} ref={iframe} csp={policy} src={href} />
+  if (hidden)
+    return <FrameWithCsp ref={iframe} src={url.href} csp={policy} height={0} />
+  else
+    return <FrameWithCsp ref={iframe} src={url.href} csp={policy} />
 }
