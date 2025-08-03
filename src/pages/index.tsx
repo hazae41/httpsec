@@ -4,14 +4,18 @@ import { splitAndJoin } from "@/libs/split";
 import { RpcErr, RpcError, RpcOk, RpcRequestInit } from "@hazae41/jsonrpc";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-export type ExplicitRpcRequest = [RpcRequestInit, Transferable[]]
-
 export default function Home() {
   const hash = useHash()
 
   const [integrity, href] = splitAndJoin(hash.slice(1), "@")
 
   const url = useMemo(() => new URL(href), [href])
+
+  const urlNoHash = useMemo(() => {
+    const url2 = new URL(url)
+    url2.hash = ""
+    return url2
+  }, [url])
 
   const [hidden, setHidden] = useState(true)
 
@@ -21,10 +25,14 @@ export default function Home() {
     setPolicy(`script-src '${integrity}';`)
   }, [integrity])
 
+  useEffect(() => {
+    setHidden(true)
+  }, [urlNoHash.href])
+
   const iframe = useRef<HTMLIFrameElement>(null)
 
-  const routeOrThrow = useCallback(async (event: MessageEvent<ExplicitRpcRequest>) => {
-    const [request] = event.data
+  const routeOrThrow = useCallback(async (event: MessageEvent<RpcRequestInit>) => {
+    const request = event.data
 
     if (request.method === "csp_get") {
       return policy
@@ -44,17 +52,17 @@ export default function Home() {
     throw new Error()
   }, [policy])
 
-  const onMessage = useCallback(async (event: MessageEvent<ExplicitRpcRequest>) => {
+  const onMessage = useCallback(async (event: MessageEvent<RpcRequestInit>) => {
     if (event.origin !== url.origin)
       return
-    const [request] = event.data
+    const request = event.data
 
     try {
       const response = new RpcOk(request.id, await routeOrThrow(event))
-      event.source?.postMessage([response], { targetOrigin: event.origin })
+      event.source?.postMessage(response, { targetOrigin: event.origin })
     } catch (e: unknown) {
       const response = new RpcErr(request.id, RpcError.rewrap(e))
-      event.source?.postMessage([response], { targetOrigin: event.origin })
+      event.source?.postMessage(response, { targetOrigin: event.origin })
     }
   }, [url, routeOrThrow])
 
@@ -64,7 +72,7 @@ export default function Home() {
   }, [onMessage])
 
   if (hidden)
-    return <FrameWithCsp ref={iframe} src={url.href} csp={policy} height={0} />
+    return <FrameWithCsp key={policy} ref={iframe} src={url.href} csp={policy} height={0} />
   else
-    return <FrameWithCsp ref={iframe} src={url.href} csp={policy} />
+    return <FrameWithCsp key={policy} ref={iframe} src={url.href} csp={policy} />
 }
