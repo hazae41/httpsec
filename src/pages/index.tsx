@@ -2,20 +2,95 @@ import { FrameWithCsp } from "@/libs/frame";
 import { useHash } from "@/libs/hash";
 import { splitAndJoin } from "@/libs/split";
 import { RpcErr, RpcError, RpcOk, RpcRequestInit } from "@hazae41/jsonrpc";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-export default function Home() {
-  const hash = useHash()
+export default function Page() {
+  const params = useHash()
 
-  const [list, href] = splitAndJoin(hash, "@")
+  if (!params)
+    return <Home />
 
-  const integrities = useMemo(() => {
-    return list.split(",")
-  }, [list])
+  return <Framer params={params} />
+}
+
+export function Home() {
+  const [href, setHref] = useState("")
+  const [hash, setHash] = useState("")
+
+  const onHrefChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setHref(event.target.value)
+  }, [])
+
+  const onHashChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setHash(event.target.value)
+  }, [])
+
+  const params = useMemo(() => {
+    if (!href)
+      return
+    if (!hash)
+      return
+    return `#${hash}@${href}`
+  }, [href, hash])
+
+  return <div className="p-4">
+    <div className="m-auto w-full max-w-[600px] flex flex-col">
+      <div className="h-[20vh]" />
+      <h1 className="text-3xl font-medium">
+        Welcome to HTTPSec
+      </h1>
+      <div className="h-1" />
+      <div className="text-default-contrast">
+        Load websites with strict integrity
+      </div>
+      <div className="h-4" />
+      <h2 className="font-medium">
+        Enter a compatible website
+      </h2>
+      <div className="h-2" />
+      <input className="w-full po-2 rounded-full bg-default-double-contrast outline-none"
+        type="text"
+        value={href}
+        onChange={onHrefChange}
+        placeholder="https://example.com/path/to/page" />
+      <div className="h-4" />
+      <h2 className="font-medium">
+        Enter the hash of the main script
+      </h2>
+      <div className="h-2" />
+      <input className="w-full po-2 rounded-full bg-default-double-contrast outline-none"
+        type="text"
+        value={hash}
+        onChange={onHashChange}
+        placeholder="LPJNul+wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ=" />
+      <div className="h-4" />
+      <a className="w-full po-2 rounded-full text-opposite bg-opposite text-center"
+        href={params}>
+        Let's go
+      </a>
+    </div>
+  </div>
+}
+
+export function Framer(props: {
+  readonly params: string
+}) {
+  const { params } = props
+
+  const [hash, href] = splitAndJoin(params, "@")
 
   const policy0 = useMemo(() => {
-    return `script-src ${integrities.map(i => `'${i}'`).join(", ")};`
-  }, [integrities])
+    const length = atob(hash).length * 8
+
+    if (length === 256)
+      return `script-src 'sha256-${hash}';`
+    if (length === 384)
+      return `script-src 'sha384-${hash}';`
+    if (length === 512)
+      return `script-src 'sha512-${hash}';`
+
+    return `script-src 'none';`
+  }, [hash])
 
   const [policy, setPolicy] = useState(policy0)
 

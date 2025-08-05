@@ -1,4 +1,5 @@
 import "@/styles/globals.css";
+
 import { Immutable } from "@hazae41/immutable";
 import type { AppProps } from "next/app";
 import { useEffect, useRef, useState } from "react";
