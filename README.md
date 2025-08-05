@@ -104,3 +104,13 @@ To do real harm, a hacker needs to compromise the HTTPSec app on first download,
 Your only concern is phishing, which is an easier problem than your website getting compromised, and would need to be solved anyways even without using HTTPSec
 
 So you take almost zero extra risk when using it, it's like adding a condom to your website, you get 99% protection instead of 0%, which is a good deal
+
+### Constraints
+
+Your website content (HTML + scripts) should not change if you want its hash to remain the same
+
+And you should not load any script without knowing their hash at compile-time (except for workers)
+
+Also your should not navigate to another page unless its content (HTML + hashes) is exactly the same
+
+So this means the best way for it to work without hassle is to have an immutably-cached client-side webapp
