@@ -49,9 +49,9 @@ if (process.env.NODE_ENV === "production") {
 
         const manifest = await fetch(new URL("/manifest.json", href)).then(r => r.json())
 
-        manifest.scope = `${location.origin}/x/${crypto.randomUUID()}`
+        manifest.scope = `/x/${crypto.randomUUID()}/`
 
-        manifest.start_url = `${location.origin}/x/${crypto.randomUUID()}/#${hash}@${href}`
+        manifest.start_url = `/x/${crypto.randomUUID()}/#${hash}@${href}`
 
         const headers = { "Content-Type": "application/json" }
 
