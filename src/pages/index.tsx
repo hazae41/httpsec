@@ -33,9 +33,9 @@ export function Home() {
     return `#${hash}@${href}`
   }, [href, hash])
 
-  return <div className="p-4">
-    <div className="m-auto w-full max-w-[600px] flex flex-col">
-      <div className="h-[20vh]" />
+  return <div className="">
+    <div className="p-4 m-auto w-full max-w-[800px] h-screen flex flex-col">
+      <div className="h-4 grow" />
       <h1 className="text-3xl font-medium">
         Welcome to HTTPSec
       </h1>
@@ -68,6 +68,7 @@ export function Home() {
         href={params}>
         Let's go
       </a>
+      <div className="h-4 md:grow" />
     </div>
   </div>
 }
