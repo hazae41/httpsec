@@ -104,17 +104,11 @@ export function Framer(props: {
     return new URL(href)
   }, [href])
 
-  const urlNoHash = useMemo(() => {
-    const url2 = new URL(url)
-    url2.hash = ""
-    return url2
-  }, [url])
-
   const [hidden, setHidden] = useState(true)
 
   useEffect(() => {
     setHidden(true)
-  }, [urlNoHash.href])
+  }, [hash])
 
   const iframe = useRef<HTMLIFrameElement>(null)
 
@@ -131,13 +125,19 @@ export function Framer(props: {
       return
     }
 
-    if (request.method === "html_show") {
+    if (request.method === "frame_show") {
       setHidden(false)
       return
     }
 
+    if (request.method === "href_set") {
+      const [href] = request.params as [string]
+      location.hash = `#${hash}@${href}`
+      return
+    }
+
     throw new RpcMethodNotFoundError()
-  }, [policy])
+  }, [hash, href, policy])
 
   const onMessage = useCallback(async (event: MessageEvent<RpcRequestInit>) => {
     if (event.origin !== url.origin)
@@ -157,6 +157,10 @@ export function Framer(props: {
     addEventListener("message", onMessage)
     return () => removeEventListener("message", onMessage)
   }, [onMessage])
+
+  const onLoad = useCallback(() => {
+
+  }, [])
 
   if (hidden)
     return <FrameWithCsp className="hidden" key={policy} ref={iframe} src={url.href} csp={policy} />
