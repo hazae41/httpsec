@@ -1,7 +1,7 @@
 import { FrameWithCsp } from "@/libs/frame";
 import { useHash } from "@/libs/hash";
 import { splitAndJoin } from "@/libs/split";
-import { RpcErr, RpcError, RpcOk, RpcRequestInit } from "@hazae41/jsonrpc";
+import { RpcErr, RpcError, RpcMethodNotFoundError, RpcOk, RpcRequestInit } from "@hazae41/jsonrpc";
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export default function Page() {
@@ -136,7 +136,7 @@ export function Framer(props: {
       return
     }
 
-    throw new Error()
+    throw new RpcMethodNotFoundError()
   }, [policy])
 
   const onMessage = useCallback(async (event: MessageEvent<RpcRequestInit>) => {
@@ -158,8 +158,17 @@ export function Framer(props: {
     return () => removeEventListener("message", onMessage)
   }, [onMessage])
 
-  if (!hidden)
-    return <FrameWithCsp key={policy} ref={iframe} src={url.href} csp={policy} />
+  const [ready, setReady] = useState(false)
 
-  return <FrameWithCsp key={policy} ref={iframe} src={url.href} csp={policy} height={0} />
+  useEffect(() => {
+    setReady(true)
+  }, [])
+
+  if (!ready)
+    return null
+
+  if (!hidden)
+    return <FrameWithCsp seamless className="w-full h-full bg-white" key={policy} ref={iframe} src={url.href} csp={policy} />
+
+  return <FrameWithCsp className="hidden" key={policy} ref={iframe} src={url.href} csp={policy} />
 }
