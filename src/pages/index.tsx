@@ -158,8 +158,8 @@ export function Framer(props: {
     return () => removeEventListener("message", onMessage)
   }, [onMessage])
 
-  if (!hidden)
-    return <FrameWithCsp seamless className="w-full h-full bg-white" key={policy} ref={iframe} src={url.href} csp={policy} />
-
-  return <FrameWithCsp className="hidden" key={policy} ref={iframe} src={url.href} csp={policy} />
+  if (hidden)
+    return <FrameWithCsp className="hidden" key={policy} ref={iframe} src={url.href} csp={policy} />
+  else
+    return <FrameWithCsp className="w-full h-full bg-white" key={policy} ref={iframe} src={url.href} csp={policy} seamless />
 }
