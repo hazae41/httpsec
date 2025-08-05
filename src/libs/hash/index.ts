@@ -12,5 +12,5 @@ export function useHash() {
     return () => removeEventListener("hashchange", onHashChange)
   }, [onHashChange])
 
-  return hash
+  return hash.slice(1)
 }

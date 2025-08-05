@@ -7,7 +7,21 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 export default function Home() {
   const hash = useHash()
 
-  const [integrity, href] = splitAndJoin(hash.slice(1), "@")
+  const [list, href] = splitAndJoin(hash, "@")
+
+  const integrities = useMemo(() => {
+    return list.split(",")
+  }, [list])
+
+  const policy0 = useMemo(() => {
+    return `script-src ${integrities.map(i => `'${i}'`).join(", ")};`
+  }, [integrities])
+
+  const [policy, setPolicy] = useState(policy0)
+
+  useEffect(() => {
+    setPolicy(policy0)
+  }, [policy0])
 
   const url = useMemo(() => new URL(href), [href])
 
@@ -18,12 +32,6 @@ export default function Home() {
   }, [url])
 
   const [hidden, setHidden] = useState(true)
-
-  const [policy, setPolicy] = useState(`script-src '${integrity}';`)
-
-  useEffect(() => {
-    setPolicy(`script-src '${integrity}';`)
-  }, [integrity])
 
   useEffect(() => {
     setHidden(true)
@@ -71,8 +79,8 @@ export default function Home() {
     return () => removeEventListener("message", onMessage)
   }, [onMessage])
 
-  if (hidden)
-    return <FrameWithCsp key={policy} ref={iframe} src={url.href} csp={policy} height={0} />
-  else
+  if (!hidden)
     return <FrameWithCsp key={policy} ref={iframe} src={url.href} csp={policy} />
+
+  return <FrameWithCsp key={policy} ref={iframe} src={url.href} csp={policy} height={0} />
 }
