@@ -64,7 +64,8 @@ export function Home() {
         onChange={onHashChange}
         placeholder="LPJNul+wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ=" />
       <div className="h-4" />
-      <a className="w-full po-2 rounded-full text-opposite bg-opposite text-center"
+      <a className="w-full po-2 rounded-full text-opposite bg-opposite text-center aria-disabled:opacity-50"
+        aria-disabled={!params}
         href={params}>
         Let's go
       </a>
