@@ -158,15 +158,6 @@ export function Framer(props: {
     return () => removeEventListener("message", onMessage)
   }, [onMessage])
 
-  const [ready, setReady] = useState(false)
-
-  useEffect(() => {
-    setReady(true)
-  }, [])
-
-  if (!ready)
-    return null
-
   if (!hidden)
     return <FrameWithCsp seamless className="w-full h-full bg-white" key={policy} ref={iframe} src={url.href} csp={policy} />
 
