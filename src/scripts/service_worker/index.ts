@@ -1,3 +1,4 @@
+import { splitAndJoin } from "@/libs/split"
 import { Immutable } from "@hazae41/immutable"
 
 declare const self: ServiceWorkerGlobalScope
@@ -35,5 +36,33 @@ if (process.env.NODE_ENV === "production") {
   /**
    * Respond with cache
    */
-  self.addEventListener("fetch", (event) => cache.handle(event))
+  self.addEventListener("fetch", (event) => {
+    const url = new URL(event.request.url)
+
+    if (url.pathname.startsWith("/x/")) {
+      return
+    }
+
+    if (url.pathname === "/manifest.json") {
+      event.respondWith((async () => {
+        const [hash, href] = splitAndJoin(url.hash.slice(1), "@")
+
+        const manifest = await fetch(new URL("/manifest.json", href)).then(r => r.json())
+
+        manifest.scope = `${location.origin}/x/${crypto.randomUUID()}`
+
+        manifest.start_url = `${location.origin}/x/${crypto.randomUUID()}/#${hash}@${href}`
+
+        const headers = { "Content-Type": "application/json" }
+
+        return new Response(JSON.stringify(manifest), {
+          status: 200,
+          statusText: "OK",
+          headers
+        })
+      })())
+    }
+
+    return cache.handle(event)
+  })
 }

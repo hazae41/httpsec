@@ -2,6 +2,7 @@ import { FrameWithCsp } from "@/libs/frame";
 import { useHash } from "@/libs/hash";
 import { splitAndJoin } from "@/libs/split";
 import { RpcErr, RpcError, RpcMethodNotFoundError, RpcOk, RpcRequestInit } from "@hazae41/jsonrpc";
+import Head from "next/head";
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export default function Page() {
@@ -158,5 +159,19 @@ export function Framer(props: {
     return () => removeEventListener("message", onMessage)
   }, [onMessage])
 
-  return <FrameWithCsp className={hidden ? "hidden" : "w-full h-full bg-white"} key={policy} ref={iframe} src={url.href} csp={policy} seamless />
+  const manifest = useMemo(() => {
+    return `/manifest.json#${hash}@${href}`
+  }, [hash, href])
+
+  return <>
+    <Head>
+      <link rel="manifest" href={manifest} />
+    </Head>
+    <FrameWithCsp className={hidden ? "hidden" : "w-full h-full bg-white"}
+      key={policy}
+      ref={iframe}
+      src={url.href}
+      csp={policy}
+      seamless />
+  </>
 }
