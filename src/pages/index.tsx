@@ -23,7 +23,9 @@ export default function Home() {
     setPolicy(policy0)
   }, [policy0])
 
-  const url = useMemo(() => new URL(href), [href])
+  const url = useMemo(() => {
+    return new URL(href)
+  }, [href])
 
   const urlNoHash = useMemo(() => {
     const url2 = new URL(url)
