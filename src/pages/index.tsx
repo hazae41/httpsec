@@ -11,7 +11,7 @@ export default function Page() {
   if (!params)
     return <Home />
 
-  return <Framer params={params} />
+  return <Loader params={params} />
 }
 
 export function Home() {
@@ -73,6 +73,28 @@ export function Home() {
       <div className="h-4 md:grow" />
     </div>
   </div>
+}
+
+export function Loader(props: {
+  readonly params: string
+}) {
+  const { params } = props
+
+  const ready = useMemo(() => {
+    const time = Date.now() / 1000
+
+    if (location.pathname !== "/")
+      return true
+
+    location.pathname = `/x/${time}`
+
+    return false
+  }, [])
+
+  if (!ready)
+    return null
+
+  return <Framer params={params} />
 }
 
 export function Framer(props: {

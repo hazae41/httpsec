@@ -40,6 +40,15 @@ if (process.env.NODE_ENV === "production") {
     const url = new URL(event.request.url)
 
     if (url.pathname.startsWith("/x/")) {
+      const request0 = new Request(event.request, { mode: "same-origin" })
+      const request1 = new Request("/", request0)
+
+      const response = cache.handle(request1)
+
+      if (response == null)
+        return
+
+      event.respondWith(response)
       return
     }
 
@@ -49,9 +58,11 @@ if (process.env.NODE_ENV === "production") {
 
         const manifest = await fetch(new URL("/manifest.json", href)).then(r => r.json())
 
-        manifest.scope = `/x/${crypto.randomUUID()}/`
+        const identity = crypto.randomUUID().slice(0, 8)
 
-        manifest.start_url = `/x/${crypto.randomUUID()}/#${hash}@${href}`
+        manifest.scope = `/x/${identity}`
+
+        manifest.start_url = `/x/${identity}#${hash}@${href}`
 
         const headers = { "Content-Type": "application/json" }
 
@@ -61,8 +72,15 @@ if (process.env.NODE_ENV === "production") {
           headers
         })
       })())
+
+      return
     }
 
-    return cache.handle(event)
+    const response = cache.handle(event.request)
+
+    if (response == null)
+      return
+
+    event.respondWith(response)
   })
 }
