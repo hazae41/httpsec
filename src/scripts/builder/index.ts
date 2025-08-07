@@ -16,6 +16,8 @@ globalThis.XMLSerializer = window.XMLSerializer
 const verifier = fs.readFileSync("./.webpack/verifier.js", "utf8")
 
 for (const pathname of walkSync(`./out`)) {
+  console.log(pathname)
+
   const filename = path.basename(pathname)
 
   if (!filename.endsWith(".html"))
@@ -29,6 +31,8 @@ for (const pathname of walkSync(`./out`)) {
 
   for (const script of scripts) {
     if (script.src) {
+      console.log("script", script.src)
+
       const text = fs.readFileSync(path.join("./out", script.src), "utf8")
       const hash = crypto.createHash("sha256").update(text).digest("base64")
 
