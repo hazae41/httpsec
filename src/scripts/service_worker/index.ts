@@ -39,7 +39,33 @@ if (process.env.NODE_ENV === "production") {
   self.addEventListener("fetch", (event) => {
     const url = new URL(event.request.url)
 
-    if (url.pathname.startsWith("/x/")) {
+    let matches: RegExpMatchArray | null
+
+    if (matches = url.pathname.match(/^\/x\/([^\/]+)(\/.*)?$/)) {
+      const scope = matches[1]
+
+      if (url.pathname === `/x/${scope}/manifest.json`) {
+        event.respondWith((async () => {
+          const [hash, href] = splitAndJoin(url.hash.slice(1), "@")
+
+          const manifest = await fetch(new URL("/manifest.json", href)).then(r => r.json())
+
+          manifest.scope = `/x/${scope}`
+
+          manifest.start_url = `/x/${scope}#${hash}@${href}`
+
+          const headers = { "Content-Type": "application/json" }
+
+          return new Response(JSON.stringify(manifest), {
+            status: 200,
+            statusText: "OK",
+            headers
+          })
+        })())
+
+        return
+      }
+
       const request0 = new Request(event.request, { mode: "same-origin" })
       const request1 = new Request("/", request0)
 
@@ -49,30 +75,6 @@ if (process.env.NODE_ENV === "production") {
         return
 
       event.respondWith(response)
-      return
-    }
-
-    if (url.pathname === "/manifest.json") {
-      event.respondWith((async () => {
-        const [hash, href] = splitAndJoin(url.hash.slice(1), "@")
-
-        const manifest = await fetch(new URL("/manifest.json", href)).then(r => r.json())
-
-        const identity = crypto.randomUUID().slice(0, 8)
-
-        manifest.scope = `/x/${identity}`
-
-        manifest.start_url = `/x/${identity}#${hash}@${href}`
-
-        const headers = { "Content-Type": "application/json" }
-
-        return new Response(JSON.stringify(manifest), {
-          status: 200,
-          statusText: "OK",
-          headers
-        })
-      })())
-
       return
     }
 

@@ -11,7 +11,7 @@ export default function Page() {
   if (!params)
     return <Home />
 
-  return <Framer params={params} />
+  return <Loader params={params} />
 }
 
 export function Home() {
@@ -75,34 +75,60 @@ export function Home() {
   </div>
 }
 
+function getSecretOrThrow() {
+  const stale = localStorage.getItem("secret")
+
+  if (stale != null)
+    return stale
+
+  const fresh = crypto.randomUUID().slice(0, 8)
+
+  localStorage.setItem("secret", fresh)
+
+  return fresh
+}
+
 export function Loader(props: {
   readonly params: string
 }) {
   const { params } = props
 
-  const ready = useMemo(() => {
-    if (location.pathname !== "/")
+  const [hash, href] = splitAndJoin(params, "@")
+
+  const getScopeOrThrow = useCallback(async () => {
+    const secret = getSecretOrThrow()
+
+    const mixing = new TextEncoder().encode(`${secret}#${hash}@${href}`)
+    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", mixing))
+
+    return digest.reduce((s, x) => s + x.toString(16).padStart(2, "0"), "").slice(0, 8)
+  }, [hash, href])
+
+  const [scope, setScope] = useState<string>()
+
+  useEffect(() => {
+    getScopeOrThrow().then(setScope).catch(console.error)
+  }, [getScopeOrThrow])
+
+  const ok = useMemo(() => {
+    if (scope == null)
+      return
+    if (location.pathname === `/x/${scope}`)
       return true
-
-    const scope = crypto.randomUUID().slice(0, 8)
-
     location.pathname = `/x/${scope}`
+  }, [scope])
 
-    return false
-  }, [])
-
-  if (!ready)
+  if (!ok)
     return null
 
-  return <Framer params={params} />
+  return <Framer key={scope} hash={hash} href={href} />
 }
 
 export function Framer(props: {
-  readonly params: string
+  readonly hash: string
+  readonly href: string
 }) {
-  const { params } = props
-
-  const [hash, href] = splitAndJoin(params, "@")
+  const { hash, href } = props
 
   const policy0 = useMemo(() => {
     const length = atob(hash).length * 8
@@ -187,12 +213,12 @@ export function Framer(props: {
   }, [onMessage])
 
   const manifest = useMemo(() => {
-    return `/manifest.json#${hash}@${href}`
+    return new URL(`${location.pathname}/manifest.json#${hash}@${href}`, location.href)
   }, [hash, href])
 
   return <>
     <Head>
-      <link rel="manifest" href={manifest} />
+      <link rel="manifest" href={manifest.href} />
     </Head>
     <FrameWithCsp className={hidden ? "hidden" : "w-full h-full bg-white"}
       key={policy}
