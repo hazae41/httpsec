@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@hazae41/immutable": "^1.1.6",
+    "@hazae41/immutable": "^1.1.7",
     "@hazae41/jsonrpc": "^1.1.7",
     "@hazae41/labase": "^1.0.14",
     "next": "15.4.6",

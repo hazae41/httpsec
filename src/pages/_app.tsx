@@ -1,3 +1,4 @@
+import { getOrWaitActiveServiceWorkerOrThrow } from "@/libs/service_worker";
 import "@/styles/globals.css";
 
 import { Immutable } from "@hazae41/immutable";
@@ -9,14 +10,16 @@ async function register() {
 
   const { registration, update } = await Immutable.register("/service_worker.latest.js")
 
-  registration.addEventListener("updatefound", () => alert(`An update is being installed on this website (${location.origin}). If you did not expect this, please contact admins and stop using this website (${location.origin}), as it may be an ongoing attack.`), {})
+  await getOrWaitActiveServiceWorkerOrThrow(registration)
 
-  if (update != null && confirm("An update is available. Do you want to update now?")) {
-    await update()
+  registration.addEventListener("updatefound", () => alert(`An update of ${location.origin} is being installed. If you did not expect this, please contact admins and stop using this website (${location.origin}), as it may be under attack.`), {})
+
+  if (update == null)
     return
-  }
+  if (!confirm(`An update of ${location.origin} is available. Do you want to update now?`))
+    return
 
-  await navigator.serviceWorker.ready
+  await update()
 }
 
 export default function App({ Component, pageProps }: AppProps) {
