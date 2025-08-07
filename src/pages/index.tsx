@@ -113,12 +113,12 @@ export function Loader(props: {
   const ok = useMemo(() => {
     if (scope == null)
       return
-    if (location.pathname === `/x/${scope}`)
+    if (location.pathname === `/${scope}`)
       return true
 
     const url = new URL(location.href)
 
-    url.pathname = `/x/${scope}`
+    url.pathname = `/${scope}`
 
     location.replace(url)
   }, [scope])

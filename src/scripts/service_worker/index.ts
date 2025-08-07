@@ -41,18 +41,18 @@ if (process.env.NODE_ENV === "production") {
 
     let matches: RegExpMatchArray | null
 
-    if (matches = url.pathname.match(/^\/x\/([^\/]+)(\/.*)?$/)) {
+    if (matches = url.pathname.match(/^\/([a-f0-9]+)(\/.*)?$/)) {
       const scope = matches[1]
 
-      if (url.pathname === `/x/${scope}/manifest.json`) {
+      if (url.pathname === `/${scope}/manifest.json`) {
         event.respondWith((async () => {
           const [hash, href] = splitAndJoin(url.hash.slice(1), "@")
 
           const manifest = await fetch(new URL("/manifest.json", href)).then(r => r.json())
 
-          manifest.scope = `/x/${scope}`
+          manifest.scope = `/${scope}`
 
-          manifest.start_url = `/x/${scope}#${hash}@${href}`
+          manifest.start_url = `/${scope}#${hash}@${href}`
 
           const headers = { "Content-Type": "application/json" }
 
