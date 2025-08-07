@@ -5,8 +5,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { Configuration } from "webpack";
 
-const revision = execSync("git rev-parse HEAD").toString().trim()
-
 async function compileServiceWorker(wpconfig: any) {
   const config = {
     /**
@@ -192,7 +190,7 @@ const nextConfig: NextConfig = withNextSidebuild({
    * Recommended in order to get deterministic build ID
    */
   generateBuildId() {
-    return revision
+    return execSync("git rev-parse HEAD").toString().trim()
   },
 
   sidebuilds: function* (wpconfig: any) {
