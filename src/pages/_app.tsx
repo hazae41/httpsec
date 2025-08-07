@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 async function register() {
   navigator.serviceWorker.addEventListener("controllerchange", () => location.reload())
 
+  // TODO add forced update detection
+
   const { update } = await Immutable.register("/service_worker.latest.js")
 
   if (update != null && confirm("An update is available. Do you want to update now?")) {
@@ -29,6 +31,6 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return <>
     <div className="static" />
-    <Component {...pageProps} />;
+    <Component {...pageProps} />
   </>
 }
