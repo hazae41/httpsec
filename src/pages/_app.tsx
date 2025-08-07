@@ -30,7 +30,6 @@ export default function App({ Component, pageProps }: AppProps) {
     return null
 
   return <>
-    <div className="static" />
     <Component {...pageProps} />
   </>
 }
