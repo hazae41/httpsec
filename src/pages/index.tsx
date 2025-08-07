@@ -81,12 +81,12 @@ export function Loader(props: {
   const { params } = props
 
   const ready = useMemo(() => {
-    const time = Date.now() / 1000
-
     if (location.pathname !== "/")
       return true
 
-    location.pathname = `/x/${time}`
+    const scope = crypto.randomUUID().slice(0, 8)
+
+    location.pathname = `/x/${scope}`
 
     return false
   }, [])
