@@ -11,7 +11,7 @@ export default function Page() {
   if (!params)
     return <Home />
 
-  return <Loader params={params} />
+  return <Framer params={params} />
 }
 
 export function Home() {
@@ -150,6 +150,11 @@ export function Framer(props: {
 
     if (request.method === "frame_show") {
       setHidden(false)
+      return
+    }
+
+    if (request.method === "frame_hide") {
+      setHidden(true)
       return
     }
 
