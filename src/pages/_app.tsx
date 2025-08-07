@@ -7,9 +7,9 @@ import { useEffect, useState } from "react";
 async function register() {
   navigator.serviceWorker.addEventListener("controllerchange", () => location.reload())
 
-  // TODO add forced update detection
+  const { registration, update } = await Immutable.register("/service_worker.latest.js")
 
-  const { update } = await Immutable.register("/service_worker.latest.js")
+  registration.addEventListener("updatefound", () => alert(`An update is being installed on this website (${location.origin}). If you did not expect this, please contact admins and stop using this website (${location.origin}), as it may be an ongoing attack.`), {})
 
   if (update != null && confirm("An update is available. Do you want to update now?")) {
     await update()
