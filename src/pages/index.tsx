@@ -115,7 +115,12 @@ export function Loader(props: {
       return
     if (location.pathname === `/x/${scope}`)
       return true
-    location.pathname = `/x/${scope}`
+
+    const url = new URL(location.href)
+
+    url.pathname = `/x/${scope}`
+
+    location.replace(url)
   }, [scope])
 
   if (!ok)
