@@ -195,8 +195,6 @@ const nextConfig: NextConfig = withNextSidebuild({
     return revision
   },
 
-  deploymentId: revision,
-
   sidebuilds: function* (wpconfig: any) {
     yield compileServiceWorker(wpconfig);
     yield compileBuilder(wpconfig);
