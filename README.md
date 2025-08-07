@@ -7,7 +7,7 @@ Load websites with integrity checks
 You pass an URL and a hash to the HTTPSec webapp
 
 ```
-https://httpsec.app/#sha256-abc123@https://example.com
+https://httpsec.app/#abc123@https://example.com
 ```
 
 Then it loads the given URL in an iframe and enforce it's CSP with the given hash
