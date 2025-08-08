@@ -11,7 +11,9 @@ export default function Page() {
   if (!params)
     return <Home />
 
-  return <Loader params={params} />
+  const [hash, href] = splitAndJoin(params, "@")
+
+  return <Framer hash={hash} href={href} />
 }
 
 export function Home() {
@@ -97,12 +99,13 @@ export function Loader(props: {
 
   const getScopeOrThrow = useCallback(async () => {
     const secret = getSecretOrThrow()
+    const origin = new URL(href).origin
 
-    const mixing = new TextEncoder().encode(`${secret}#${hash}@${href}`)
+    const mixing = new TextEncoder().encode(`${secret}@${origin}`)
     const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", mixing))
 
     return digest.reduce((s, x) => s + x.toString(16).padStart(2, "0"), "").slice(0, 8)
-  }, [hash, href])
+  }, [href])
 
   const [scope, setScope] = useState<string>()
 
@@ -110,20 +113,26 @@ export function Loader(props: {
     getScopeOrThrow().then(setScope).catch(console.error)
   }, [getScopeOrThrow])
 
-  const ok = useMemo(() => {
+  const redirecting = useMemo(() => {
     if (scope == null)
       return
     if (location.pathname === `/${scope}`)
-      return true
+      return
 
     const url = new URL(location.href)
 
     url.pathname = `/${scope}`
 
     location.replace(url)
+
+    return true
   }, [scope])
 
-  if (!ok)
+  useEffect(() => {
+
+  }, [scope])
+
+  if (redirecting)
     return null
 
   return <Framer key={scope} hash={hash} href={href} />
@@ -218,7 +227,7 @@ export function Framer(props: {
   }, [onMessage])
 
   const manifest = useMemo(() => {
-    return new URL(`${location.pathname}/manifest.json#${hash}@${href}`, location.href)
+    return new URL(`/manifest.json#${href}`, location.href)
   }, [hash, href])
 
   return <>
