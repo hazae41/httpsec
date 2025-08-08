@@ -11,9 +11,7 @@ export default function Page() {
   if (!params)
     return <Home />
 
-  const [hash, href] = splitAndJoin(params, "@")
-
-  return <Framer hash={hash} href={href} />
+  return <Loader params={params} />
 }
 
 export function Home() {
@@ -98,6 +96,39 @@ export function Loader(props: {
   const [hash, href] = useMemo(() => {
     return splitAndJoin(params, "@")
   }, [params])
+
+  const error = useMemo(() => {
+    const matches = location.pathname.match(/^\/([a-f0-9]+)(\/.*)?$/)
+
+    if (matches == null)
+      return
+
+    const scope = matches[1]
+
+    if (hash && href) {
+      localStorage.setItem(scope, `#${hash}@${href}`)
+      return
+    }
+
+    if (hash) {
+      localStorage.setItem(scope, hash)
+      return
+    }
+
+    const hash2 = localStorage.getItem(scope)
+
+    if (hash2 == null)
+      return
+
+    location.hash = `#${hash2}@${href}`
+
+    return true
+  }, [hash, href])
+
+  if (error)
+    return null
+
+  return <Framer hash={hash} href={href} />
 }
 
 export function Framer(props: {
@@ -194,13 +225,34 @@ export function Framer(props: {
     return () => removeEventListener("message", onMessage)
   }, [onMessage])
 
-  const manifest = useMemo(() => {
-    return new URL(`/manifest.json#${href}`, location.href)
+  const [manifest, setManifest] = useState<string>()
+
+  const f = useCallback(async () => {
+    const manifest = await fetch(new URL("/manifest.json", href)).then(r => r.json())
+
+    const scope = new URL(manifest.scope, href)
+    const start_url = new URL(manifest.start_url, href)
+
+    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(scope.href)))
+    const base16 = digest.reduce((s, x) => s + x.toString(16).padStart(2, "0"), "").slice(0, 8)
+
+    location.replace(`/${base16}#${hash}@${href}`)
+
+    manifest.scope = new URL(`/${base16}`, location.href).href
+    manifest.start_url = new URL(`/${base16}#@${start_url.href}`, location.href).href
+
+    localStorage.setItem(base16, `#${hash}@${start_url.href}`)
+
+    setManifest("data:application/json;base64," + btoa(JSON.stringify(manifest)))
   }, [hash, href])
+
+  useEffect(() => {
+    f().catch(console.error)
+  }, [f])
 
   return <>
     <Head>
-      <link rel="manifest" href={manifest.href} />
+      {manifest && <link rel="manifest" href={manifest} />}
     </Head>
     <FrameWithCsp className={hidden ? "hidden" : "w-full h-full bg-white"}
       key={policy}

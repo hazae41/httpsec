@@ -53,33 +53,6 @@ if (process.env.NODE_ENV === "production") {
       return
     }
 
-    if (url.pathname === "/manifest.json") {
-      event.respondWith((async () => {
-        const href = url.hash.slice(1)
-
-        const manifest = await fetch(new URL("/manifest.json", href)).then(r => r.json())
-
-        const scope = new URL(manifest.scope, href)
-        const start_url = new URL(manifest.start_url, href)
-
-        const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(scope.href)))
-        const base16 = digest.reduce((s, x) => s + x.toString(16).padStart(2, "0"), "").slice(0, 8)
-
-        manifest.scope = `/${base16}`
-        manifest.start_url = `/${base16}#@${start_url.href}`
-
-        const headers = { "Content-Type": "application/json" }
-
-        return new Response(JSON.stringify(manifest), {
-          status: 200,
-          statusText: "OK",
-          headers
-        })
-      })())
-
-      return
-    }
-
     const response = cache.handle(event.request)
 
     if (response == null)
