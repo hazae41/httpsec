@@ -95,47 +95,9 @@ export function Loader(props: {
 }) {
   const { params } = props
 
-  const [hash, href] = splitAndJoin(params, "@")
-
-  const getScopeOrThrow = useCallback(async () => {
-    const secret = getSecretOrThrow()
-    const origin = new URL(href).origin
-
-    const mixing = new TextEncoder().encode(`${secret}@${origin}`)
-    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", mixing))
-
-    return digest.reduce((s, x) => s + x.toString(16).padStart(2, "0"), "").slice(0, 8)
-  }, [href])
-
-  const [scope, setScope] = useState<string>()
-
-  useEffect(() => {
-    getScopeOrThrow().then(setScope).catch(console.error)
-  }, [getScopeOrThrow])
-
-  const redirecting = useMemo(() => {
-    if (scope == null)
-      return
-    if (location.pathname === `/${scope}`)
-      return
-
-    const url = new URL(location.href)
-
-    url.pathname = `/${scope}`
-
-    location.replace(url)
-
-    return true
-  }, [scope])
-
-  useEffect(() => {
-
-  }, [scope])
-
-  if (redirecting)
-    return null
-
-  return <Framer key={scope} hash={hash} href={href} />
+  const [hash, href] = useMemo(() => {
+    return splitAndJoin(params, "@")
+  }, [params])
 }
 
 export function Framer(props: {
@@ -200,6 +162,12 @@ export function Framer(props: {
 
     if (request.method === "href_set") {
       const [href] = request.params as [string]
+      location.hash = `#${hash}@${href}`
+      return
+    }
+
+    if (request.method === "hash_set") {
+      const [hash] = request.params as [string]
       location.hash = `#${hash}@${href}`
       return
     }
