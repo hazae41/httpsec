@@ -243,6 +243,10 @@ export function Framer(props: {
       manifest.scope = new URL(`/${base16}`, location.href).href
       manifest.start_url = new URL(`/${base16}#@${start_url.href}`, location.href).href
 
+      if (manifest.icons)
+        for (const icon of manifest.icons)
+          icon.src = new URL(icon.src, href).href
+
       setManifest("data:application/json;base64," + btoa(JSON.stringify(manifest)))
 
       return
