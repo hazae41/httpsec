@@ -228,7 +228,7 @@ export function Framer(props: {
         throw new Error("Invalid origin")
 
       /**
-       * Mixing with secret avoids hash collision, avoids leaking the scope to HTTPSec servers, and avoids tracking shared links
+       * Mixing the scope with a random per-user secret avoids hash collision attacks, avoids leaking the scope to HTTP, and avoids tracking shared links
        */
 
       const secret = getSecretOrThrow()
