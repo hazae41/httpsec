@@ -227,6 +227,10 @@ export function Framer(props: {
       if (start_url.origin !== origin)
         throw new Error("Invalid origin")
 
+      /**
+       * Mixing with secret avoids hash collision, avoids leaking the scope to HTTPSec servers, and avoids tracking shared links
+       */
+
       const secret = getSecretOrThrow()
       const mixing = `#${secret}@${scope.href}`
 
