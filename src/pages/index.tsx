@@ -98,7 +98,7 @@ export function Loader(props: {
   }, [fragment])
 
   const redirect = useMemo(() => {
-    const scope = location.pathname.match(/^\/([a-f0-9]+)(\/.*)?$/)?.[1]
+    const scope = location.pathname.match(/^\/([a-f0-9]+)(\/)?$/)?.[1]
 
     if (scope == null)
       return
