@@ -235,10 +235,8 @@ export function Framer(props: {
 
       const target = new URL(`/${base16}#${hash}@${href}`, location.href)
 
-      if (location.href !== target.href) {
+      if (location.href !== target.href)
         location.replace(target)
-        throw new Error("Redirected")
-      }
 
       localStorage.setItem(base16, hash)
 
