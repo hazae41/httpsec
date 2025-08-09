@@ -98,27 +98,20 @@ export function Loader(props: {
   }, [fragment])
 
   const redirect = useMemo(() => {
+    if (hash)
+      return
+
     const scope = location.pathname.match(/^\/([a-f0-9]+)(\/)?$/)?.[1]
 
     if (scope == null)
       return
 
-    const fragment = localStorage.getItem(scope)
+    const hash2 = localStorage.getItem(scope)
 
-    if (fragment == null)
+    if (!hash2)
       return
 
-    const [hash0, href0] = splitAndJoin(fragment.slice(1), "@")
-
-    const hash1 = hash || hash0
-    const href1 = href || href0
-
-    const target = new URL(`/${scope}#${hash1}@${href1}`, location.href)
-
-    if (location.href === target.href)
-      return
-
-    return target
+    return new URL(`/${scope}#${hash2}@${href}`, location.href).href
   }, [hash, href])
 
   useEffect(() => {
@@ -244,7 +237,7 @@ export function Framer(props: {
         throw new Error("Redirect")
       }
 
-      localStorage.setItem(base16, `#${hash}@${start_url.href}`)
+      localStorage.setItem(base16, hash)
 
       manifest.scope = new URL(`/${base16}`, location.href).href
       manifest.start_url = new URL(`/${base16}#@${start_url.href}`, location.href).href
