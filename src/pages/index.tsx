@@ -6,12 +6,12 @@ import Head from "next/head";
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export default function Page() {
-  const params = useHash()
+  const fragment = useHash()
 
-  if (!params)
+  if (!fragment)
     return <Home />
 
-  return <Loader params={params} />
+  return <Loader fragment={fragment} />
 }
 
 export function Home() {
@@ -26,7 +26,7 @@ export function Home() {
     setHash(event.target.value)
   }, [])
 
-  const params = useMemo(() => {
+  const fragment = useMemo(() => {
     if (!href)
       return
     if (!hash)
@@ -66,8 +66,8 @@ export function Home() {
         placeholder="LPJNul+wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ=" />
       <div className="h-4" />
       <a className="w-full po-2 rounded-full text-opposite bg-opposite text-center aria-disabled:opacity-50"
-        aria-disabled={!params}
-        href={params}>
+        aria-disabled={!fragment}
+        href={fragment}>
         Let's go
       </a>
       <div className="h-4 md:grow" />
@@ -89,43 +89,50 @@ function getSecretOrThrow() {
 }
 
 export function Loader(props: {
-  readonly params: string
+  readonly fragment: string
 }) {
-  const { params } = props
+  const { fragment } = props
 
   const [hash, href] = useMemo(() => {
-    return splitAndJoin(params, "@")
-  }, [params])
+    return splitAndJoin(fragment, "@")
+  }, [fragment])
 
-  const error = useMemo(() => {
-    const matches = location.pathname.match(/^\/([a-f0-9]+)(\/.*)?$/)
+  const redirect = useMemo(() => {
+    const scope = location.pathname.match(/^\/([a-f0-9]+)(\/.*)?$/)?.[1]
 
-    if (matches == null)
+    if (scope == null)
       return
 
-    const scope = matches[1]
+    const fragment = localStorage.getItem(scope)
 
-    if (hash && href) {
-      localStorage.setItem(scope, `#${hash}@${href}`)
-      return
-    }
-
-    if (hash) {
-      localStorage.setItem(scope, hash)
-      return
-    }
-
-    const hash2 = localStorage.getItem(scope)
-
-    if (hash2 == null)
+    if (fragment == null)
       return
 
-    location.hash = `#${hash2}@${href}`
+    const [hash0, href0] = splitAndJoin(fragment.slice(1), "@")
 
-    return true
+    const hash1 = hash || hash0
+    const href1 = href || href0
+
+    const target = new URL(`/${scope}#${hash1}@${href1}`, location.href)
+
+    if (location.href === target.href)
+      return
+
+    return target
   }, [hash, href])
 
-  if (error)
+  useEffect(() => {
+    if (!redirect)
+      return
+    location.replace(redirect)
+  }, [redirect])
+
+  if (redirect)
+    return null
+
+  if (!hash)
+    return null
+  if (!href)
     return null
 
   return <Framer hash={hash} href={href} />
@@ -166,6 +173,8 @@ export function Framer(props: {
     setHidden(true)
   }, [hash])
 
+  const [manifest, setManifest] = useState<string>()
+
   const iframe = useRef<HTMLIFrameElement>(null)
 
   const routeOrThrow = useCallback(async (event: MessageEvent<RpcRequestInit>) => {
@@ -203,6 +212,41 @@ export function Framer(props: {
       return
     }
 
+    if (request.method === "manifest_set") {
+      const [endpoint] = request.params as [string]
+
+      const manifest = await fetch(new URL(endpoint, href)).then(res => res.json())
+
+      const origin = new URL(href).origin
+
+      const scope = new URL(manifest.scope, href)
+      const start_url = new URL(manifest.start_url, href)
+
+      if (scope.origin !== origin)
+        throw new Error("Invalid origin")
+      if (start_url.origin !== origin)
+        throw new Error("Invalid origin")
+
+      const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(scope.href)))
+      const base16 = digest.reduce((s, x) => s + x.toString(16).padStart(2, "0"), "").slice(0, 8)
+
+      const target = new URL(`/${base16}#${hash}@${href}`, location.href)
+
+      if (location.href !== target.href) {
+        location.replace(target)
+        throw new Error("Redirect")
+      }
+
+      localStorage.setItem(base16, `#${hash}@${start_url.href}`)
+
+      manifest.scope = new URL(`/${base16}`, location.href).href
+      manifest.start_url = new URL(`/${base16}#@${start_url.href}`, location.href).href
+
+      setManifest("data:application/json;base64," + btoa(JSON.stringify(manifest)))
+
+      return
+    }
+
     throw new RpcMethodNotFoundError()
   }, [hash, href, policy])
 
@@ -224,31 +268,6 @@ export function Framer(props: {
     addEventListener("message", onMessage)
     return () => removeEventListener("message", onMessage)
   }, [onMessage])
-
-  const [manifest, setManifest] = useState<string>()
-
-  const f = useCallback(async () => {
-    const manifest = await fetch(new URL("/manifest.json", href)).then(r => r.json())
-
-    const scope = new URL(manifest.scope, href)
-    const start_url = new URL(manifest.start_url, href)
-
-    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(scope.href)))
-    const base16 = digest.reduce((s, x) => s + x.toString(16).padStart(2, "0"), "").slice(0, 8)
-
-    location.replace(`/${base16}#${hash}@${href}`)
-
-    manifest.scope = new URL(`/${base16}`, location.href).href
-    manifest.start_url = new URL(`/${base16}#@${start_url.href}`, location.href).href
-
-    localStorage.setItem(base16, `#${hash}@${start_url.href}`)
-
-    setManifest("data:application/json;base64," + btoa(JSON.stringify(manifest)))
-  }, [hash, href])
-
-  useEffect(() => {
-    f().catch(console.error)
-  }, [f])
 
   return <>
     <Head>
