@@ -173,6 +173,9 @@ export function Framer(props: {
   const routeOrThrow = useCallback(async (event: MessageEvent<RpcRequestInit>) => {
     const request = event.data
 
+    if (request.method === "httpsec_ping")
+      return
+
     if (request.method === "csp_get") {
       return policy
     }
@@ -234,7 +237,7 @@ export function Framer(props: {
 
       if (location.href !== target.href) {
         location.replace(target)
-        throw new Error("Redirect")
+        throw new Error("Redirected")
       }
 
       localStorage.setItem(base16, hash)
