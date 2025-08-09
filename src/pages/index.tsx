@@ -227,7 +227,10 @@ export function Framer(props: {
       if (start_url.origin !== origin)
         throw new Error("Invalid origin")
 
-      const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(scope.href)))
+      const secret = getSecretOrThrow()
+      const mixing = `#${secret}@${scope.href}`
+
+      const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(mixing)))
       const base16 = digest.reduce((s, x) => s + x.toString(16).padStart(2, "0"), "").slice(0, 8)
 
       const target = new URL(`/${base16}#${hash}@${href}`, location.href)
