@@ -139,7 +139,6 @@ export function Framer(props: {
     }
 
     if (request.method === "frame_show") {
-      console.log("showing frame")
       setHidden(false)
       return
     }
