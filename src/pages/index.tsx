@@ -200,7 +200,9 @@ export function Framer(props: {
   }, [hash, href, policy])
 
   const onMessage = useCallback(async (event: MessageEvent<RpcRequestInit>) => {
-    if (event.origin !== origin)
+    if (frame == null)
+      return
+    if (event.source !== frame.contentWindow)
       return
     const request = event.data
 
@@ -211,7 +213,7 @@ export function Framer(props: {
       const response = new RpcErr(request.id, RpcError.rewrap(e))
       event.source?.postMessage(response, { targetOrigin: event.origin })
     }
-  }, [origin, routeOrThrow])
+  }, [origin, frame, routeOrThrow])
 
   useEffect(() => {
     addEventListener("message", onMessage)
