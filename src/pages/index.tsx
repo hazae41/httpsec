@@ -1,9 +1,10 @@
 import { FrameWithCsp } from "@/libs/frame";
 import { useHash } from "@/libs/hash";
+import { Nullable } from "@/libs/nullable";
 import { splitAndJoin } from "@/libs/split";
 import { RpcErr, RpcError, RpcMethodNotFoundError, RpcOk, RpcRequestInit } from "@hazae41/jsonrpc";
 import Head from "next/head";
-import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 export default function Page() {
   const fragment = useHash()
@@ -11,7 +12,7 @@ export default function Page() {
   if (!fragment)
     return <Home />
 
-  return <Loader fragment={fragment} />
+  return <Framer fragment={fragment} />
 }
 
 export function Home() {
@@ -75,20 +76,7 @@ export function Home() {
   </div>
 }
 
-function getSecretOrThrow() {
-  const stale = localStorage.getItem("secret")
-
-  if (stale != null)
-    return stale
-
-  const fresh = crypto.randomUUID().slice(0, 8)
-
-  localStorage.setItem("secret", fresh)
-
-  return fresh
-}
-
-export function Loader(props: {
+export function Framer(props: {
   readonly fragment: string
 }) {
   const { fragment } = props
@@ -97,45 +85,11 @@ export function Loader(props: {
     return splitAndJoin(fragment, "@")
   }, [fragment])
 
-  const redirect = useMemo(() => {
-    if (hash)
-      return
+  const origin = useMemo(() => {
+    return new URL(href).origin
+  }, [href])
 
-    const scope = location.pathname.match(/^\/([a-f0-9]+)(\/)?$/)?.[1]
-
-    if (scope == null)
-      return
-
-    const hash2 = localStorage.getItem(scope)
-
-    if (!hash2)
-      return
-
-    return new URL(`/${scope}#${hash2}@${href}`, location.href).href
-  }, [hash, href])
-
-  useEffect(() => {
-    if (!redirect)
-      return
-    location.replace(redirect)
-  }, [redirect])
-
-  if (redirect)
-    return null
-
-  if (!hash)
-    return null
-  if (!href)
-    return null
-
-  return <Framer hash={hash} href={href} />
-}
-
-export function Framer(props: {
-  readonly hash: string
-  readonly href: string
-}) {
-  const { hash, href } = props
+  const [frame, setFrame] = useState<Nullable<HTMLIFrameElement>>(null)
 
   const policy0 = useMemo(() => {
     const length = atob(hash).length * 8
@@ -156,29 +110,27 @@ export function Framer(props: {
     setPolicy(policy0)
   }, [policy0])
 
-  const url = useMemo(() => {
-    return new URL(href)
-  }, [href])
-
   const [hidden, setHidden] = useState(true)
 
   useEffect(() => {
-    setHidden(true)
-  }, [hash])
+    if (frame == null)
+      return
+    const f = () => setHidden(true)
+
+    frame.addEventListener("load", f)
+    return () => frame.removeEventListener("load", f)
+  }, [frame])
 
   const [manifest, setManifest] = useState<string>()
-
-  const iframe = useRef<HTMLIFrameElement>(null)
 
   const routeOrThrow = useCallback(async (event: MessageEvent<RpcRequestInit>) => {
     const request = event.data
 
-    if (request.method === "httpsec_ping")
-      return
+    if (request.method === "knock_knock")
+      return "httpsec"
 
-    if (request.method === "csp_get") {
+    if (request.method === "csp_get")
       return policy
-    }
 
     if (request.method === "csp_set") {
       const [policy] = request.params as [string]
@@ -187,6 +139,7 @@ export function Framer(props: {
     }
 
     if (request.method === "frame_show") {
+      console.log("showing frame")
       setHidden(false)
       return
     }
@@ -223,25 +176,10 @@ export function Framer(props: {
       if (start_url.origin !== origin)
         throw new Error("Invalid origin")
 
-      /**
-       * Mixing the scope with a random per-user secret avoids hash collision attacks, avoids leaking the scope to HTTP, and avoids tracking shared links
-       */
+      const nonce = crypto.randomUUID().slice(0, 8)
 
-      const secret = getSecretOrThrow()
-      const mixing = `#${secret}@${scope.href}`
-
-      const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(mixing)))
-      const base16 = digest.reduce((s, x) => s + x.toString(16).padStart(2, "0"), "").slice(0, 8)
-
-      const target = new URL(`/${base16}#${hash}@${href}`, location.href)
-
-      if (location.href !== target.href)
-        location.replace(target)
-
-      localStorage.setItem(base16, hash)
-
-      manifest.scope = new URL(`/${base16}`, location.href).href
-      manifest.start_url = new URL(`/${base16}#@${start_url.href}`, location.href).href
+      manifest.scope = new URL(`/x/${nonce}`, location.href).href
+      manifest.start_url = new URL(`/x/${nonce}#${hash}@${start_url.href}`, location.href).href
 
       for (const icon of (manifest.icons || []))
         icon.src = new URL(icon.src, href).href
@@ -255,7 +193,7 @@ export function Framer(props: {
   }, [hash, href, policy])
 
   const onMessage = useCallback(async (event: MessageEvent<RpcRequestInit>) => {
-    if (event.origin !== url.origin)
+    if (event.origin !== origin)
       return
     const request = event.data
 
@@ -266,7 +204,7 @@ export function Framer(props: {
       const response = new RpcErr(request.id, RpcError.rewrap(e))
       event.source?.postMessage(response, { targetOrigin: event.origin })
     }
-  }, [url, routeOrThrow])
+  }, [origin, routeOrThrow])
 
   useEffect(() => {
     addEventListener("message", onMessage)
@@ -278,9 +216,9 @@ export function Framer(props: {
       {manifest && <link rel="manifest" href={manifest} />}
     </Head>
     <FrameWithCsp className={hidden ? "hidden" : "w-full h-full bg-white"}
+      ref={setFrame}
       key={policy}
-      ref={iframe}
-      src={url.href}
+      src={href}
       csp={policy}
       seamless />
   </>

@@ -38,9 +38,7 @@ if (process.env.NODE_ENV === "production") {
   self.addEventListener("fetch", (event) => {
     const url = new URL(event.request.url)
 
-    let matches: RegExpMatchArray | null
-
-    if (matches = url.pathname.match(/^\/([a-f0-9]+)(\/.*)?$/)) {
+    if (url.pathname.startsWith("/x/")) {
       const request0 = new Request(event.request, { mode: "same-origin" })
       const request1 = new Request("/", request0)
 
