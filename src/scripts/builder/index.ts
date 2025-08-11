@@ -13,7 +13,9 @@ globalThis.XMLSerializer = window.XMLSerializer
  * Inject magic script into all .html files
  */
 
-const verifier = fs.readFileSync("./.webpack/verifier.js", "utf8")
+const loader = fs.readFileSync("./.webpack/loader.js", "utf8")
+
+const manifest = fs.readFileSync("./out/manifest.json", "base64")
 
 for (const pathname of walkSync(`./out`)) {
   const filename = path.basename(pathname)
@@ -47,22 +49,35 @@ for (const pathname of walkSync(`./out`)) {
     }
   }
 
-  const begin = new XMLSerializer().serializeToString(document)
-    .replaceAll("<head>", `<head><script type="module">${verifier.replaceAll("INJECT_SOURCES", sources.join(" "))}</script>`)
+  const script = loader
+    .replaceAll("INJECT_MANIFEST", `data:application/json;base64,${manifest}`)
+    .replaceAll("INJECT_SOURCES", sources.join(" "))
 
-  const inter = begin
-    .replaceAll("INJECT_HASH", "DUMMY_HASH")
+  const original = new XMLSerializer().serializeToString(document)
+
+  const injected = original
+    .replaceAll("<head>", `<head><script type="module">${script}</script>`)
+
+  const dummy = injected
+    .replaceAll("INJECT_HTML_HASH", "DUMMY_HASH")
     .replaceAll("/>", ">")
     .replaceAll("\n", "")
     .replaceAll("\r", "")
     .replaceAll(" ", "")
     .toLowerCase()
 
-  const hash = crypto.createHash("sha256").update(inter).digest("hex")
+  const htmlh = crypto.createHash("sha256").update(dummy).digest("hex")
 
-  const final = begin.replaceAll("INJECT_HASH", hash)
+  const html2 = injected.replaceAll("INJECT_HTML_HASH", htmlh)
+  const script2 = script.replaceAll("INJECT_HTML_HASH", htmlh)
 
-  fs.writeFileSync(pathname, final, "utf8")
+  const relative = path.relative(`./out`, pathname)
+
+  const scripth = crypto.createHash("sha256").update(script2).digest("base64")
+
+  fs.writeFileSync(pathname, html2, "utf8")
+
+  console.log(relative, scripth)
 }
 
 /**
