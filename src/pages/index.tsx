@@ -117,8 +117,13 @@ export function Framer(props: {
       return
     const f = () => setHidden(true)
 
-    frame.addEventListener("load", f)
-    return () => frame.removeEventListener("load", f)
+    const g = () => frame.addEventListener("load", f)
+    frame.addEventListener("load", g, { once: true })
+
+    return () => {
+      frame.removeEventListener("load", g)
+      frame.removeEventListener("load", f)
+    }
   }, [frame])
 
   const [manifest, setManifest] = useState<string>()
@@ -175,10 +180,13 @@ export function Framer(props: {
       if (start_url.origin !== origin)
         throw new Error("Invalid origin")
 
-      const nonce = crypto.randomUUID().slice(0, 8)
+      const stale = location.pathname
+      const fresh = `/x/${crypto.randomUUID().slice(0, 8)}`
 
-      manifest.scope = new URL(`/x/${nonce}`, location.href).href
-      manifest.start_url = new URL(`/x/${nonce}#${hash}@${start_url.href}`, location.href).href
+      const pathname = stale.startsWith("/x/") ? stale : fresh
+
+      manifest.scope = new URL(pathname, location.href).href
+      manifest.start_url = new URL(`${pathname}#${hash}@${start_url.href}`, location.href).href
 
       for (const icon of (manifest.icons || []))
         icon.src = new URL(icon.src, href).href
