@@ -17,5 +17,11 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/x/:path*",
+      "destination": "/index.html"
+    }
   ]
 }
