@@ -230,7 +230,7 @@ const nextConfig: NextConfig = withNextSidebuild({
         ]
       }
     ]
-  }
+  },
 });
 
 export default nextConfig;
