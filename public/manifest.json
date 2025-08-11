@@ -1,0 +1,9 @@
+{
+  "name": "HTTPSec",
+  "short_name": "HTTPSec",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/"
+}
